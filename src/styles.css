@@ -1,0 +1,17 @@
+
+body {
+    background-color: #333333;
+}
+.container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding-top: 50px;
+}
+
+#gameWorld {
+    width: 1024px;
+    height: 768px;
+    background-color: white;
+    border: 1px solid black;
+}
