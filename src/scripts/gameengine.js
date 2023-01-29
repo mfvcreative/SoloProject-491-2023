@@ -11,13 +11,13 @@ class GameEngine {
         this.frames = 0
 
         //Scenes
-
+        this.demoScene = new DemoScene()
 
 
         // Information on the input
         this.click = null;
         this.mouseDown = null;
-        this.mouse = null;
+        this.mouse = {x:0, y: 0};
         this.wheel = null;
         this.uiActive = false;
         this.keys = {};
@@ -28,9 +28,11 @@ class GameEngine {
         };
     };
 
-    init(ctx, assets) {
+    init(ctx) {
         this.ctx = ctx;
-        console.log(assets)
+
+        this.demoScene.init()
+
         this.startInput();
         this.timer = new Timer();
     };
@@ -51,9 +53,6 @@ class GameEngine {
         });
         
         this.ctx.canvas.addEventListener("mousemove", e => {
-            if (this.options.debugging) {
-                console.log("MOUSE_MOVE", getXandY(e));
-            }
             this.mouse = getXandY(e);
         });
 
@@ -68,13 +67,14 @@ class GameEngine {
             if (this.options.debugging) {
                 console.log("MouseDown", getXandY(e));
             }
+            this.mouseDown = true
         })
 
         this.ctx.canvas.addEventListener('mouseup', e => {
             if (this.options.debugging) {
                 console.log("MouseUp", getXandY(e));
             }
-            this.mouseDown = null
+            this.mouseDown = false
         })
 
         this.ctx.canvas.addEventListener("wheel", e => {
@@ -84,6 +84,8 @@ class GameEngine {
             e.preventDefault(); // Prevent Scrolling
             this.wheel = e;
         });
+        this.ctx.canvas.addEventListener("keydown", event => this.keys[event.key] = true);
+        this.ctx.canvas.addEventListener("keyup", event => this.keys[event.key] = false);
 
         this.ctx.canvas.addEventListener("contextmenu", e => {
             if (this.options.debugging) {
@@ -102,13 +104,14 @@ class GameEngine {
 
     draw() {
         this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
+        this.demoScene.draw(this.ctx)
         if(this.options.debugging) {
             this.#debug()
         }
     };
 
     update() {
-
+        this.demoScene.update(this.keys, this.mouse, this.mouseDown, this.clockTick)
     };
 
     loop() {
@@ -127,8 +130,9 @@ class GameEngine {
             this.renderedFrames++
         }
         this.ctx. textAlign = 'left'
-        this.ctx.font = '10px Helvetica'
-        this.ctx.fillText(`FPS: ${this.frames}`, 5,10)
+        this.ctx.font = '24px Helvetica'
+        this.ctx.fillStyle = 'black'
+        this.ctx.fillText(`FPS: ${this.frames}`, 5,24)
     }
 }
 

@@ -98,8 +98,8 @@ const getRandomInt = (max) =>  Math.floor(Math.random() * max);
 
 /**
  * Normalizes a vector between two points.
- * @param {x: Number, y: Number} vect1 starting point
- * @param {x: Number, y: Number} vect2 end point
+ * @param {x: Number, y: Number} p1 starting point
+ * @param {x: Number, y: Number} p2 end point
  * @returns normalized x and y 
  */
 const normalize = (p1, p2) => {
@@ -108,4 +108,12 @@ const normalize = (p1, p2) => {
         x: (p2.x - p1.x)/d,
         y: (p2.y - p1.y)/d
     }
+}
+
+const findAdjacent = (angle, hypotenuse) => {
+    return Math.cos(angle) * hypotenuse
+}
+
+const findOpposite = (angle, hypotenuse) => {
+    return Math.sin(angle) * hypotenuse
 }
