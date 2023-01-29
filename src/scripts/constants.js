@@ -9,15 +9,15 @@ const BLOCK_SIZE = 32
 
 
 // Characters Sprite Paths
-const PLAYER_SPRITE_PATH = '../assets/characters/player.png'
-const COMMON_ZOMBIE_SPRITE_PATH = '../assets/characters/enemy.png'
+const PLAYER_SPRITE_PATH = './player.png'
+const COMMON_ZOMBIE_SPRITE_PATH = './enemy.png'
 
 
 //Tile Maps
-const TILE_MAP_DEMO = '../assets/maps/demoMap.png'
+const TILE_MAP_DEMO = './demoMap.png'
 
 //props
-const BULLET_SPRITE_PATH = '../assets/props/bullet.png'
+const BULLET_SPRITE_PATH = './bullet.png'
 
 //Array for bulk queing
 const DEMO_ASSETS = [
