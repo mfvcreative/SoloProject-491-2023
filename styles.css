@@ -8,6 +8,11 @@ body {
     align-items: center;
     padding-top: 50px;
 }
+.p {
+    text-align: center;
+    margin-top: 6vh;
+    color: white;
+}
 
 #gameWorld {
     width: 1024px;
