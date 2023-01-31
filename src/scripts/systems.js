@@ -392,8 +392,8 @@ class ProjectileSystem {
         let weapon = player.components.weapons.currentWeapon
         let directionVector = normalize({x:x, y:y}, mouse)
 
-        for(let i = 0; i <= .6; i += .3) {
-            console.log(i)
+        for(let i = 0; i < 5; i++) {
+            console.log("i: ",i)
             let dirVector = {
                 x: directionVector.x,
                 y: directionVector.y
@@ -404,8 +404,8 @@ class ProjectileSystem {
                 size: weapon.projectileSize,
                 damage: weapon.damage
             })
-
-            let angle = -.3 + i
+            let angle = -.2 + (.1 * i)
+            console.log('angle: ', angle)
             dirVector.x = (dirVector.x * Math.cos((angle))) - dirVector.y * Math.sin(angle)
             dirVector.y = (dirVector.y * Math.cos((angle))) + dirVector.x * Math.sin(angle)
             dirVector.x = dirVector.x * weapon.projectileVelocity

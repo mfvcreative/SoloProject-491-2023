@@ -38,6 +38,7 @@ class DemoScene extends Scene {
     draw(ctx) {
         this.renderSystem.draw(ctx)
         // drawing colliders for debug
+        /*
         this.entityManager.getEntities.forEach(e => {
             if(e.tag === 'collisionBox') {
                 ctx.fillStyle = rgba(33,33,33,.5)
@@ -55,5 +56,6 @@ class DemoScene extends Scene {
                 ctx.fill()
             }
         })
+        */
     }
 }

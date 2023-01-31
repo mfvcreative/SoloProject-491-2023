@@ -7,7 +7,7 @@ const WIDTH = 1024
 const HEIGHT = 768
 const BLOCK_SIZE = 32
 
-
+/*
 // Characters Sprite Paths
 const PLAYER_SPRITE_PATH = '../assets/characters/player.png'
 const COMMON_ZOMBIE_SPRITE_PATH = '../assets/characters/enemy.png'
@@ -25,6 +25,26 @@ const ARMOR_BAR_SEGMENT_SPRITE = './assets/UI/armorBarSegment.png'
 const WEAPON_SLOT_SPRITE = '../assets/UI/weaponSlot.png'
 const MAIN_MENU_BUTTON_SPRITE = '../assets/UI/mainMenuButton.png'
 const FONT = '../assets/fonts/PressStart2P-Regular.ttf'
+
+*/
+
+// Paths for live game because for some reason having them in a folder does not work
+const PLAYER_SPRITE_PATH = './player.png'
+const COMMON_ZOMBIE_SPRITE_PATH = './enemy.png'
+
+
+//Tile Maps
+const TILE_MAP_DEMO = './demoMap.png'
+
+//props
+const BULLET_SPRITE_PATH = './bullet.png'
+
+//UI
+const HEALTH_BAR_SEGMENT_SPRITE = './healthBarSegment.png'
+const ARMOR_BAR_SEGMENT_SPRITE = './armorBarSegment.png'
+const WEAPON_SLOT_SPRITE = './weaponSlot.png'
+const MAIN_MENU_BUTTON_SPRITE = './mainMenuButton.png'
+const FONT = '.PressStart2P-Regular.ttf'
 
 //Array for bulk queing
 const DEMO_ASSETS = [
