@@ -117,3 +117,21 @@ const findAdjacent = (angle, hypotenuse) => {
 const findOpposite = (angle, hypotenuse) => {
     return Math.sin(angle) * hypotenuse
 }
+
+const mapEntities = (entityManager, data, blueprint) => {
+    let result = []
+    for(let i = 0; i < data.length; i += 32) {
+        result.push(data.slice(i, 32 + i))
+    }
+    result.forEach((row, y) => {
+        row.forEach((e, x) => {
+            if(e !== 0) {
+                let props = {
+                    x: x * BLOCK_SIZE,
+                    y: y * BLOCK_SIZE
+                }
+                blueprint(entityManager, props)
+            }
+        })
+    })
+}

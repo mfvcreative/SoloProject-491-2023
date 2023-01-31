@@ -38,8 +38,8 @@ CTransform.prototype.name = 'transform'
 
 
 const CState = function CState(props) {
-    this.currentState = null,
-    this.states = props || []
+    this.currentState = props.initial,
+    this.states = props || {}
     return this
 }
 CState.prototype.name = 'state'
@@ -92,3 +92,25 @@ const CFieldOfSight = function CFieldOfSight(props) {
     return this
 }
 CFieldOfSight.prototype.name = 'fieldOfSight'
+
+const CTextBox = function CTextBox(props) {
+    this.x = props.x
+    this.y = props.y
+    this.width = props.width,
+    this.height = props.height,
+    this.fontSize = props.fontSize
+    this.maxChars = props.maxChars
+    this.textAlign = props.textAlign
+    this.fillStyle = props.fillStyle
+    this.fillStyleActive = props.fillStyleActive
+    this.fill = this.fillStyle
+    this.text = props.text || ''
+    return this
+}
+CTextBox.prototype.name = 'textBox'
+
+const CWeapons = function CWeapons(props) {
+    this.weaponList = props || [PISTOL_WEAPON]
+    this.currentWeapon = SHOTGUN_WEAPON
+}
+CWeapons.prototype.name = 'weapons'

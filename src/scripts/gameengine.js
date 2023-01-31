@@ -11,8 +11,8 @@ class GameEngine {
         this.frames = 0
 
         //Scenes
-        this.demoScene = new DemoScene()
-
+        this.scene = new DemoScene()
+        //this.scene = new MainMenuScene()
 
         // Information on the input
         this.click = null;
@@ -30,8 +30,8 @@ class GameEngine {
 
     init(ctx) {
         this.ctx = ctx;
-
-        this.demoScene.init()
+        document.fonts.add(new FontFace('PressStart2P-Regular', `url(${FONT})`))
+        this.scene.init()
 
         this.startInput();
         this.timer = new Timer();
@@ -45,6 +45,47 @@ class GameEngine {
         };
         gameLoop();
     };
+
+    
+
+    draw() {
+        this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
+        this.scene.draw(this.ctx)
+        if(this.options.debugging) {
+            this.#debug()
+        }
+    };
+
+    update() {
+        this.scene.update(
+            this.click,
+            this.mouseDown,
+            this.mouse,
+            this.wheel,
+            this.keys,
+            this.clockTick)
+    };
+
+    loop() {
+        this.clockTick = this.timer.tick();
+        this.update();
+        this.draw();
+    };
+
+    #debug() {
+        if(this.currentTime > 1) {
+            this.currentTime = 0
+            this.frames = this.renderedFrames
+            this.renderedFrames = 0
+        } else {
+            this.currentTime += this.clockTick
+            this.renderedFrames++
+        }
+        this.ctx. textAlign = 'left'
+        this.ctx.font = '12px PressStart2P-Regular'
+        this.ctx.fillStyle = 'black'
+        this.ctx.fillText(`FPS: ${this.frames}`, 5,24)
+    }
 
     startInput() {
         const getXandY = e => ({
@@ -75,6 +116,7 @@ class GameEngine {
                 console.log("MouseUp", getXandY(e));
             }
             this.mouseDown = false
+            this.click = null
         })
 
         this.ctx.canvas.addEventListener("wheel", e => {
@@ -101,39 +143,6 @@ class GameEngine {
             }
         });
     };
-
-    draw() {
-        this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
-        this.demoScene.draw(this.ctx)
-        if(this.options.debugging) {
-            this.#debug()
-        }
-    };
-
-    update() {
-        this.demoScene.update(this.keys, this.mouse, this.mouseDown, this.clockTick)
-    };
-
-    loop() {
-        this.clockTick = this.timer.tick();
-        this.update();
-        this.draw();
-    };
-
-    #debug() {
-        if(this.currentTime > 1) {
-            this.currentTime = 0
-            this.frames = this.renderedFrames
-            this.renderedFrames = 0
-        } else {
-            this.currentTime += this.clockTick
-            this.renderedFrames++
-        }
-        this.ctx. textAlign = 'left'
-        this.ctx.font = '24px Helvetica'
-        this.ctx.fillStyle = 'black'
-        this.ctx.fillText(`FPS: ${this.frames}`, 5,24)
-    }
 }
 
 

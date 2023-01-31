@@ -123,7 +123,7 @@ class CollisionSystem {
             width: rect.width + (circ.radius * 2),
             height: rect.height + (circ.radius * 2)
         }
-        if(this.pointInRect({x: circ.x, y: circ.y}, expandedRect)) {
+        if(CollisionSystem.pointInRect({x: circ.x, y: circ.y}, expandedRect)) {
             //return this.#checkCorners(circ, rect)
             return true
         }
@@ -155,7 +155,7 @@ class CollisionSystem {
     }
 
     // Checks if point is within a rectangle
-    pointInRect = (point, rect) => {
+    static pointInRect = (point, rect) => {
         return (point.x >= rect.x && point.y >= rect.y && point.x < rect.x + rect.width && point.y < rect.y + rect.height)
     }
 }
@@ -172,8 +172,7 @@ class RenderSystem {
             if(e.isDrawable) {
                 if(e.tag === 'player') {
                     this.#handlePlayer(ctx, e)
-                }
-                else if(e.components.transform && e.components.sprite) {
+                } else if(e.components.transform && e.components.sprite) {
                     let sprite = e.components.sprite
                     ctx.drawImage(
                         sprite.sprite,
@@ -186,6 +185,9 @@ class RenderSystem {
                         sprite.scaledWidth,
                         sprite.scaledHeight
                     )
+                }
+                if(e.components.textBox) {
+                    this.#drawText(ctx, e)
                 }
             }
         })
@@ -211,6 +213,14 @@ class RenderSystem {
             sprite.scaledHeight
         )
         ctx.restore()
+    }
+
+    #drawText(ctx, e) {
+        let t = e.components.textBox
+        ctx.textAlign = t.textAlign
+        ctx.font = `${t.fontSize} PressStart2P-Regular`
+        ctx.fillStyle = t.fill
+        ctx.fillText(`${t.text}`, t.x, t.y)
     }
 }
 
@@ -264,8 +274,8 @@ class PlayerInputSystem {
      * " " - jump
      * @param {input params} input
      */
-    update(input, mouse, tick) {
-      
+    update(input, mouseDown, mouse, tick) {
+
         this.playerPos.angle = Math.atan2(mouse.x - this.playerPos.x, -(mouse.y - this.playerPos.y))
 
         if(input['a']) {
@@ -326,9 +336,11 @@ class ProjectileSystem {
     constructor(entitiesManager) {
         this.entityManager = entitiesManager
         this.fired = false
+        this.coolDown = 0
     }
 
-    update(tick) {
+    update(tick, mouseDown, mouse, player) {
+        this.coolDown -= tick
         this.entityManager.getEntities.forEach(e => {
             if(e.tag === 'projectile') {
                 let t = e.components.transform
@@ -339,27 +351,71 @@ class ProjectileSystem {
                 b.y = t.y
             }
         })
+        if(mouseDown && this.coolDown <= 0) {
+            this.#fire(mouse, player)
+        }
     }
-    spawnBullet(mouse, player) {
-        if(!this.fired) {
+    #fire(mouse, player) {
+        switch(player.components.weapons.currentWeapon.name) {
+            case 'shotgun': this.#fireShotGun(mouse, player)
+                break
+            default: this.#firePistolOrRifle(mouse, player)
+                break
+        }
+    }
+    #firePistolOrRifle(mouse, player) {
+        console.log('pistol')
+            let offset = 30
             let x = player.components.transform.x
             let y = player.components.transform.y
+            let weapon = player.components.weapons.currentWeapon
             let dirVector = normalize({x:x, y:y}, mouse)
             let bullet = bulletEntity(this.entityManager, {
-                x: x + (dirVector.x * 30),
-                y: y + (dirVector.y * 30)
+                x: x + (dirVector.x * offset),
+                y: y + (dirVector.y * offset),
+                size: weapon.projectileSize,
+                damage: weapon.damage
             })
             
-            dirVector.x = dirVector.x * bullet.components.transform.maxVelocity
-            dirVector.y = dirVector.y * bullet.components.transform.maxVelocity
+            dirVector.x = dirVector.x * weapon.projectileVelocity
+            dirVector.y = dirVector.y * weapon.projectileVelocity
             bullet.components.transform.velocityX = dirVector.x
             bullet.components.transform.velocityY = dirVector.y
-            this.fired = true
+            this.coolDown = weapon.coolDown
+    }
+
+    #fireShotGun(mouse, player) {
+        console.log('shotgun')
+        let offset = 30
+        let x = player.components.transform.x
+        let y = player.components.transform.y
+        let weapon = player.components.weapons.currentWeapon
+        let directionVector = normalize({x:x, y:y}, mouse)
+
+        for(let i = 0; i <= .6; i += .3) {
+            console.log(i)
+            let dirVector = {
+                x: directionVector.x,
+                y: directionVector.y
+            }
+            let bullet = bulletEntity(this.entityManager, {
+                x: x + (dirVector.x * offset),
+                y: y + (dirVector.y * offset),
+                size: weapon.projectileSize,
+                damage: weapon.damage
+            })
+
+            let angle = -.3 + i
+            dirVector.x = (dirVector.x * Math.cos((angle))) - dirVector.y * Math.sin(angle)
+            dirVector.y = (dirVector.y * Math.cos((angle))) + dirVector.x * Math.sin(angle)
+            dirVector.x = dirVector.x * weapon.projectileVelocity
+            dirVector.y = dirVector.y * weapon.projectileVelocity
+            bullet.components.transform.velocityX = dirVector.x
+            bullet.components.transform.velocityY = dirVector.y
+            console.log(bullet)
         }
         
-    }
-    ready() {
-        this.fired = false
+        this.coolDown = weapon.coolDown
     }
 }
 
@@ -380,4 +436,47 @@ class LifespanSystem {
             }
         })
     }
+}
+
+
+class UISystem {
+    constructor(entities) {
+        this.entities = entities
+    }
+
+    update(click, mouseOver, tick) {
+        this.entities.forEach(e => {
+            if(e.tag === 'UIButton') {
+                let s = e.components.state
+                if(s.currentState === 'static') {
+                    if(click && CollisionSystem.pointInRect(click, e.components.boxCollider)) {
+                        this.#setState(e, 'pressed')
+                    }
+                } else if(s.currentState === 'pressed') {
+                    let res = e.components.state.states['pressed'].timeLimit -= tick
+                    if(res < 0) {
+                        this.#setState(e, 'static')
+                    }
+                }
+                if(CollisionSystem.pointInRect(mouseOver, e.components.boxCollider)) {
+                    e.components.textBox.fill = e.components.textBox.fillStyleActive
+                } else {
+                    e.components.textBox.fill = e.components.textBox.fillStyle
+                }
+                
+            }
+        })
+    }
+
+    #setState(e, state) {
+       e.components.state.currentState = state
+       let s = e.components.state.states[state]
+       e.components.sprite.frameX = s.frameX
+       e.components.sprite.frameY = s.frameY
+       e.components.sprite.maxFrames = s.maxFrames || 1
+    }
+}
+
+class StateManager {
+
 }

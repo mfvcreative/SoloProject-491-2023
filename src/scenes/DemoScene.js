@@ -14,31 +14,30 @@ class DemoScene extends Scene {
     }
 
     init() {
-        let e = demoTileMapEntity(this.entityManager)
+        demoTileMapEntity(this.entityManager)
         this.player = playerEntity(this.entityManager)
-        let r = this.#makeCollisionMap(collisionMap)
+
+        //map entities
+        mapEntities(this.entityManager, collisionMap, collisionBox)
+        mapEntities(this.entityManager, healthBarMapping, healthBarSegment)
+        mapEntities(this.entityManager, armorBarMapping,armorBarSegment)
+        mapEntities(this.entityManager, weaponSlotsMapping, weaponSlot)
         this.playerInput = new PlayerInputSystem(this.player)
         this.enemy = zombieEnemyEntity(this.entityManager)
     }
 
-    update(input, mouse, mouseDown, tick) {
+    update(click, mouseDown, mouse, wheel, keys, tick) {
         this.entityManager.update()
         this.collisionSystem.update(tick)
-        this.playerInput.update(input, mouse, tick)
+        this.playerInput.update(keys, mouseDown, mouse, tick)
         this.enemySystem.update(tick)
-        if(mouseDown) {
-            this.projectileSystem.spawnBullet(mouse, this.player)
-        } else {
-            this.projectileSystem.ready()
-        } 
-        this.projectileSystem.update(tick)
+        this.projectileSystem.update(tick, mouseDown, mouse, this.player)
         this.lifeSpanSystem.update(tick)
-        console.log(this.enemy.components.health.currentHealth)
     }
 
     draw(ctx) {
         this.renderSystem.draw(ctx)
-        /* drawing colliders for debug
+        // drawing colliders for debug
         this.entityManager.getEntities.forEach(e => {
             if(e.tag === 'collisionBox') {
                 ctx.fillStyle = rgba(33,33,33,.5)
@@ -55,25 +54,6 @@ class DemoScene extends Scene {
                 ctx.arc(e.components.fieldOfSight.x, e.components.fieldOfSight.y, e.components.fieldOfSight.radius, 0, 2 * Math.PI)
                 ctx.fill()
             }
-        })
-        */
-    }
-
-    #makeCollisionMap(data) {
-        let result = []
-        for(let i = 0; i < data.length; i += 32) {
-            result.push(data.slice(i, 32 + i))
-        }
-        result.forEach((row, y) => {
-            row.forEach((e, x) => {
-                if(e !== 0) {
-                    let props = {
-                        x: x * BLOCK_SIZE,
-                        y: y * BLOCK_SIZE
-                    }
-                    collisionBox(this.entityManager, props)
-                }
-            })
         })
     }
 }
