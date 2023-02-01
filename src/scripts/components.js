@@ -114,3 +114,12 @@ const CWeapons = function CWeapons(props) {
     this.currentWeapon = SHOTGUN_WEAPON
 }
 CWeapons.prototype.name = 'weapons'
+
+const CParticle = function CParticle(props) {
+    this.type = props.type
+    this.size = props.size
+    this.deathSize = props.deathSize || 0
+    this.decreaseRate = props.decreaseRate || .95
+    this.color = props.color
+}
+CParticle.prototype.name = 'particle'

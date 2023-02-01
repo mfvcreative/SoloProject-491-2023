@@ -38,13 +38,14 @@ const TILE_MAP_DEMO = './demoMap.png'
 
 //props
 const BULLET_SPRITE_PATH = './bullet.png'
+const FIRE_PARTICLE_SPRITE = './fire.png'
 
 //UI
 const HEALTH_BAR_SEGMENT_SPRITE = './healthBarSegment.png'
 const ARMOR_BAR_SEGMENT_SPRITE = './armorBarSegment.png'
 const WEAPON_SLOT_SPRITE = './weaponSlot.png'
 const MAIN_MENU_BUTTON_SPRITE = './mainMenuButton.png'
-const FONT = '.PressStart2P-Regular.ttf'
+const FONT = './PressStart2P-Regular.ttf'
 
 //Array for bulk queing
 const DEMO_ASSETS = [
@@ -56,6 +57,7 @@ const DEMO_ASSETS = [
     ARMOR_BAR_SEGMENT_SPRITE,
     WEAPON_SLOT_SPRITE,
     MAIN_MENU_BUTTON_SPRITE,
+    FIRE_PARTICLE_SPRITE
 ]
 
 

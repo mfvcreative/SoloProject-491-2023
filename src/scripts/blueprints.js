@@ -59,13 +59,66 @@ const bulletEntity = (entitymanager, props) => {
             new CTransform({
                 x: props.x,
                 y: props.y,
-                maxVelocity: 1000
             }),
             new CCircleCollider({
                 radius: 5
             }),
             new CDamage(props.damage),
             new CLifespan(1)
+        ]
+    })
+}
+
+const dustParticleEntity = (entitymanager, props) => {
+    return entitymanager.addEntity({
+        tag: 'particle',
+        components: [
+            new CTransform({
+                x: props.x,
+                y: props.y,
+                velocityX: props.velocityX,
+                velocityY: props.velocityY
+            }),
+            new CParticle({
+                type: 'dust',
+                size: props.size,
+                deathSize: props.deathSize,
+                decreaseRate: props.decreaseRate,
+                color: props.color
+            })
+        ]
+    })
+}
+
+const fireParticleEntity = (entitymanager, props) => {
+    let type = 'fire'
+    return entitymanager.addEntity({
+        tag: 'particle',
+        components: [
+            new CSprite({
+                sprite: ASSET_MANAGER.cache[FIRE_PARTICLE_SPRITE],
+                spriteWidth: 100,
+                spriteHeight: 90,
+                scale: props.size,
+                fps: 1
+            }),
+            new CTransform({
+                x: props.x,
+                y: props.y,
+                velocityX: props.velocityX,
+                velocityY: props.velocityY
+            }),
+            new CParticle({
+                type: type,
+                size: props.size,
+                deathSize: props.deathSize,
+                decreaseRate: props.decreaseRate,
+                color: null
+            }),
+            new CCircleCollider({
+                radius: props.size
+            }),
+            new CDamage(props.damage),
         ]
     })
 }

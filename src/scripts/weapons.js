@@ -23,3 +23,11 @@ const SHOTGUN_WEAPON = {
     projectileSize: 1.7,
     damage: 3
 }
+
+const FLAMETHROWER_WEAPON = {
+    name: 'flamethrower',
+    coolDown: .02,
+    projectileVelocity: 1100,
+    projectileSize: .5,
+    damage: 3
+}

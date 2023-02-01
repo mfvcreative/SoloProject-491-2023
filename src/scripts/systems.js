@@ -172,6 +172,8 @@ class RenderSystem {
             if(e.isDrawable) {
                 if(e.tag === 'player') {
                     this.#handlePlayer(ctx, e)
+                } else if(e.tag === 'particle') {
+                    this.#handleParticle(ctx, e)
                 } else if(e.components.transform && e.components.sprite) {
                     let sprite = e.components.sprite
                     ctx.drawImage(
@@ -213,6 +215,35 @@ class RenderSystem {
             sprite.scaledHeight
         )
         ctx.restore()
+    }
+
+    #handleParticle(ctx, e) {
+        let p = e.components.particle
+        if(p.type === 'dust') {
+            ctx.beginPath()
+            ctx.arc(e.components.transform.x, e.components.transform.y, p.size, 0, Math.PI * 2)
+            ctx.fillStyle = p.color
+            ctx.fill()
+        } else if(p.type === 'fire') {
+            let t = e.components.transform
+            let sprite = e.components.sprite
+            //ctx.save()
+            //ctx.translate(t.x, t.y)
+            //ctx.rotate(t.angle)
+            ctx.drawImage(
+                sprite.sprite,
+                sprite.frameX,
+                sprite.frameY,
+                sprite.spriteWidth,
+                sprite.spriteHeight,
+                e.components.transform.x,
+                e.components.transform.y,
+                (sprite.spriteWidth * p.size),
+                (sprite.spriteHeight * p.size)
+            )
+            //ctx.restore()
+        }
+
     }
 
     #drawText(ctx, e) {
@@ -337,6 +368,10 @@ class ProjectileSystem {
         this.entityManager = entitiesManager
         this.fired = false
         this.coolDown = 0
+        this.offset = 30
+        this.dustColor = rgba(0,0,0,.2)
+        this.dustDeathSize = .5
+        this.dustDecreaseRate = .95
     }
 
     update(tick, mouseDown, mouse, player) {
@@ -349,6 +384,27 @@ class ProjectileSystem {
                 t.y += t.velocityY * tick
                 b.x = t.x
                 b.y = t.y
+                this.#createBulletTrail(e)
+            } else if(e.tag === 'particle') {
+                if(e.components.particle.type === 'dust') {
+                    let s = e.components.particle.size *= e.components.particle.decreaseRate
+                    if(s <= e.components.particle.deathSize) {
+                        e.destroy()
+                    } else {
+                        let t = e.components.transform
+                        t.x += t.velocityX
+                        t.y += t.velocityY
+                    }
+                    
+                } else if(e.components.particle.type === 'fire') {
+                    let s = e.components.sprite.scale += .3
+                    if(s > e.components.particle.deathSize) {
+                        e.destroy()
+                    }
+                    let t = e.components.transform
+                    t.x += t.velocityX * tick
+                    t.y += t.velocityY * tick
+                }
             }
         })
         if(mouseDown && this.coolDown <= 0) {
@@ -357,6 +413,8 @@ class ProjectileSystem {
     }
     #fire(mouse, player) {
         switch(player.components.weapons.currentWeapon.name) {
+            case 'flamethrower': this.#fireFlameThrower(mouse, player)
+                break
             case 'shotgun': this.#fireShotGun(mouse, player)
                 break
             default: this.#firePistolOrRifle(mouse, player)
@@ -364,58 +422,86 @@ class ProjectileSystem {
         }
     }
     #firePistolOrRifle(mouse, player) {
-        console.log('pistol')
-            let offset = 30
             let x = player.components.transform.x
             let y = player.components.transform.y
             let weapon = player.components.weapons.currentWeapon
             let dirVector = normalize({x:x, y:y}, mouse)
             let bullet = bulletEntity(this.entityManager, {
-                x: x + (dirVector.x * offset),
-                y: y + (dirVector.y * offset),
+                x: x + (dirVector.x * this.offset),
+                y: y + (dirVector.y * this.offset),
                 size: weapon.projectileSize,
                 damage: weapon.damage
             })
-            
             dirVector.x = dirVector.x * weapon.projectileVelocity
             dirVector.y = dirVector.y * weapon.projectileVelocity
             bullet.components.transform.velocityX = dirVector.x
             bullet.components.transform.velocityY = dirVector.y
+            this.#createBulletTrail(bullet)
             this.coolDown = weapon.coolDown
     }
 
     #fireShotGun(mouse, player) {
-        console.log('shotgun')
-        let offset = 30
         let x = player.components.transform.x
         let y = player.components.transform.y
         let weapon = player.components.weapons.currentWeapon
         let directionVector = normalize({x:x, y:y}, mouse)
 
         for(let i = 0; i < 5; i++) {
-            console.log("i: ",i)
             let dirVector = {
                 x: directionVector.x,
                 y: directionVector.y
             }
             let bullet = bulletEntity(this.entityManager, {
-                x: x + (dirVector.x * offset),
-                y: y + (dirVector.y * offset),
+                x: x + (dirVector.x * this.offset),
+                y: y + (dirVector.y * this.offset),
                 size: weapon.projectileSize,
                 damage: weapon.damage
             })
             let angle = -.2 + (.1 * i)
-            console.log('angle: ', angle)
             dirVector.x = (dirVector.x * Math.cos((angle))) - dirVector.y * Math.sin(angle)
             dirVector.y = (dirVector.y * Math.cos((angle))) + dirVector.x * Math.sin(angle)
             dirVector.x = dirVector.x * weapon.projectileVelocity
             dirVector.y = dirVector.y * weapon.projectileVelocity
             bullet.components.transform.velocityX = dirVector.x
             bullet.components.transform.velocityY = dirVector.y
-            console.log(bullet)
+            this.#createBulletTrail(bullet)
         }
         
         this.coolDown = weapon.coolDown
+    }
+
+    #fireFlameThrower(mouse, player) {
+            let x = player.components.transform.x
+            let y = player.components.transform.y
+            
+            let weapon = player.components.weapons.currentWeapon
+            let dirVector = normalize({x:x, y:y}, mouse)
+            let fire = fireParticleEntity(this.entityManager, {
+                x: x + (dirVector.x * this.offset) - 100,
+                y: y + (dirVector.y * this.offset),
+                size: weapon.projectileSize,
+                damage: weapon.damage,
+                deathSize: weapon.projectileSize * 10,
+                decreaseRate: this.dustDecreaseRate
+            })
+            dirVector.x = dirVector.x * weapon.projectileVelocity
+            dirVector.y = dirVector.y * weapon.projectileVelocity
+            fire.components.transform.velocityX = dirVector.x
+            fire.components.transform.velocityY = dirVector.y
+            this.coolDown = weapon.coolDown
+    }
+
+    #createBulletTrail(e) {
+        dustParticleEntity(this.entityManager, {
+            x: e.components.transform.x,
+            y: e.components.transform.y,
+            velocityX: e.components.transform.velocityX,
+            velocityY: e.components.transform.velocityY,
+            size: 5,
+            color: this.dustColor,
+            deathSize: this.dustDeathSize,
+            decreaseRate: this.dustDecreaseRate
+        })
     }
 }
 
@@ -475,8 +561,4 @@ class UISystem {
        e.components.sprite.frameY = s.frameY
        e.components.sprite.maxFrames = s.maxFrames || 1
     }
-}
-
-class StateManager {
-
 }
