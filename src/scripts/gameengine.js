@@ -4,6 +4,7 @@ class GameEngine {
     constructor(options) {
 
         this.ctx = null;
+        this.gameOver = false
         //used to calculate FPS
         this.renderedFrames = 0
         this.currentTime = 0
@@ -57,7 +58,7 @@ class GameEngine {
     };
 
     update() {
-        this.scene.update(
+        this.gameOver = this.scene.update(
             this.click,
             this.mouseDown,
             this.mouse,

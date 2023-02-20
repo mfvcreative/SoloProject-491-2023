@@ -30,7 +30,7 @@ const CTransform = function CTransform(props) {
     this.velocityX = 0
     this.velocityY = 0
     this.maxVelocity = props.maxVelocity || 500
-    this.angle = 0
+    this.angle = props.angle || 0
     return this
 }
 CTransform.prototype.name = 'transform'
@@ -80,9 +80,17 @@ CDamage.prototype.name = 'damage'
 const CHealth = function CHealth(total) {
     this.currentHealth = total
     this.maxHealth = total
+    this.invulnerability = false
+    this.invulnerabilityTimer = 0
     return this
 }
 CHealth.prototype.name = 'health'
+
+const CArmor = function CArmor(total) {
+    this.currentArmor = total
+    return this
+}
+CArmor.prototype.name = 'armor'
 
 const CFieldOfSight = function CFieldOfSight(props) {
     this.x = props.x
@@ -123,3 +131,8 @@ const CParticle = function CParticle(props) {
     this.color = props.color
 }
 CParticle.prototype.name = 'particle'
+
+const CScore = function CScore() {
+    this.score = 0
+}
+CScore.prototype.name = 'score'

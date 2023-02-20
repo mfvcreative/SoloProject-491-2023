@@ -22,15 +22,25 @@ class CollisionSystem {
                                     let circ = e.components.circleCollider
                                     //console.log(e)
                                     if(this.#circleRectangleCollision(circ, t.components.boxCollider)) {
-                                        if(e.tag === 'player' || e.tag === 'enemy') {
+                                        if(e.tag === 'player') {
                                             circ.collisions[t.tag] = {pos: t.components.boxCollider, dir: this.#checkDirection(e, t)}
-                                            this.#playerCollisionResolution(e, deltaTime)  
+                                            this.#playerCollisionResolution(e)  
+                                        } else if(e.tag === 'enemy') {
+                                            circ.collisions[t.tag] = {pos: t.components.boxCollider, dir: this.#checkDirection(e, t)}
+                                            this.#enemyCollisionResolution(e)
                                         } else {
                                             circ.collisions[t.tag] = true
                                         }
                                         
                                     }
                                 } else if(t.components.circleCollider) {
+                                    if(e.tag === 'player' && t.tag === 'enemy') {
+                                        let circA = e.components.circleCollider
+                                        let circB = t.components.circleCollider
+                                        if(this.#circleCollisions(circA, circB)) {
+                                            circA.collisions[t.tag] = true
+                                        }
+                                    }
                                     if(e.tag !== 'player') {
                                         let circA = e.components.circleCollider
                                         let circB = t.components.circleCollider
@@ -46,19 +56,18 @@ class CollisionSystem {
                                         }
                                     }
                                     if(e.tag === 'projectile') this.#projectileCollisionResolution(e, t)
+                                    if(e.tag === 'player') this.#playerCollisionResolution(e, deltaTime)
                                 }
                             }
                         }
                     })
-                    
-                   // if(e.tag === 'enemy') this.#enemyCollisionResolution(e)
                 }
             }
 
         })
     }
 
-    #playerCollisionResolution(player) {
+    #playerCollisionResolution(player, deltaTime) {
         let collisions = player.components.circleCollider.collisions
         for(let e in collisions) {
             if(e === 'collisionBox') {
@@ -68,10 +77,36 @@ class CollisionSystem {
                dir.y *= t.maxVelocity
                player.components.transform.velocityX += dir.x
                player.components.transform.velocityY += dir.y
+               player.components.circleCollider.collisions = {}
+            } else if(e === 'enemy') {
+                let h = player.components.health
+                if(!h.invulnerability) {
+                    player.components.health.currentHealth -= DAMAGE_VALUE
+                    h.invulnerability = true
+                } else {
+                    h.invulnerabilityTimer += deltaTime
+                    if(h.invulnerabilityTimer >= INVULNERABILITY_TIME) {
+                        h.invulnerability = false
+                        h.invulnerabilityTimer = 0
+                    }
+                }
+                player.components.circleCollider.collisions = {}
             }
-            collisions[e].dir = {
-                x: 0,
-                y: 0
+        }
+    }
+
+    #enemyCollisionResolution(enemy) {
+        let collisions = enemy.components.circleCollider.collisions
+        for(let e in collisions) {
+            if(e === 'collisionBox') {
+               let dir = collisions[e].dir
+               let t = enemy.components.transform
+               dir.x *= t.maxVelocity
+               dir.y *= t.maxVelocity
+               //console.log('x: ',enemy.components.transform.velocityX, 'Y: ', enemy.components.transform.velocityY)
+               enemy.components.transform.velocityX += dir.x
+               enemy.components.transform.velocityY += dir.y
+               //console.log('After x: ',enemy.components.transform.velocityX, 'Y: ', enemy.components.transform.velocityY)
             }
         }
     }
@@ -87,10 +122,6 @@ class CollisionSystem {
                 projectile.destroy()
             }
         }
-    }
-
-    #enemyCollisionResolution(enemy) {
-
     }
 
     //Collision between two Rectangles, does not return direction of collision
@@ -171,10 +202,13 @@ class RenderSystem {
         this.entities.forEach(e => {
             if(e.isDrawable) {
                 if(e.tag === 'player') {
-                    this.#handlePlayer(ctx, e)
+                    this.#handlePlayer(ctx, e, 10)
+                } else if(e.tag === 'enemy') {
+                    this.#handlePlayer(ctx, e, -3)
                 } else if(e.tag === 'particle') {
                     this.#handleParticle(ctx, e)
                 } else if(e.components.transform && e.components.sprite) {
+
                     let sprite = e.components.sprite
                     ctx.drawImage(
                         sprite.sprite,
@@ -196,10 +230,9 @@ class RenderSystem {
 
     }
 
-    #handlePlayer(ctx, e) {
+    #handlePlayer(ctx, e, offset) {
         let t = e.components.transform
         let sprite = e.components.sprite
-        let offset = 10 // so origin can be on players head
         ctx.save()
         ctx.translate(t.x, t.y)
         ctx.rotate(t.angle)
@@ -227,9 +260,6 @@ class RenderSystem {
         } else if(p.type === 'fire') {
             let t = e.components.transform
             let sprite = e.components.sprite
-            //ctx.save()
-            //ctx.translate(t.x, t.y)
-            //ctx.rotate(t.angle)
             ctx.drawImage(
                 sprite.sprite,
                 sprite.frameX,
@@ -241,7 +271,6 @@ class RenderSystem {
                 (sprite.spriteWidth * p.size),
                 (sprite.spriteHeight * p.size)
             )
-            //ctx.restore()
         }
 
     }
@@ -252,42 +281,6 @@ class RenderSystem {
         ctx.font = `${t.fontSize} PressStart2P-Regular`
         ctx.fillStyle = t.fill
         ctx.fillText(`${t.text}`, t.x, t.y)
-    }
-}
-
-
-
-/**
- * Camera class used to move the canvas with player at the center.
- */
-
-class Camera {
-    constructor(target) {
-        this.sceneWIDTH = WIDTH * .5
-        this.sceneHEIGHT = HEIGHT * .5
-        this.worldWidth = WIDTH_PIXELS,
-        this.worldHeight = HEIGHT_PIXELS,
-        this.targetPos = target.components.transform
-        this.x = this.targetPos.x - this.sceneWIDTH
-        this.y = this.targetPos.y - this.sceneHEIGHT    
-    }
-
-    update() {
-        if(this.targetPos.x - this.sceneWIDTH <= 0) {
-            this.x = 0
-        } else if(this.targetPos.x + this.sceneWIDTH >= this.worldWidth) {
-            this.x = this.worldWidth - WIDTH
-        }
-        else {
-            this.x = this.targetPos.x - this.sceneWIDTH
-        }
-
-        if(this.targetPos.y + this.sceneHEIGHT >= this.worldHeight + BLOCKSIZE) {
-            this.y = this.worldHeight - HEIGHT + BLOCKSIZE
-        }
-        else {
-            this.y = this.targetPos.y - this.sceneHEIGHT
-        }
     }
 }
 
@@ -332,27 +325,31 @@ class PlayerInputSystem {
 }
 
 class EnemyStateSystem {
-    constructor(entities) {
+    constructor(entities, player) {
         this.entities = entities
+        this.player = player
     }
     update(tick) {
         this.entities.forEach(e => {
             if(e.tag === 'enemy') {
                 if(e.components.health.currentHealth <= 0) {
+                    this.player.components.score.score += 50
                     e.destroy()
 
                 } else if(e.components.fieldOfSight.sighted['player']) {
                     let player = e.components.fieldOfSight.sighted['player'].components.transform
                     let t = e.components.transform
                     let dir = normalize(t, player)
+                    e.components.transform.angle = Math.atan2(player.x - t.x, -(player.y - t.y))
                     dir.x = dir.x * t.maxVelocity * tick
                     dir.y = dir.y * t.maxVelocity * tick
                     e.components.transform.x += dir.x
                     e.components.transform.y += dir.y
-                    e.components.circleCollider.x = e.components.transform.x
-                    e.components.circleCollider.y = e.components.transform.y
-                    e.components.fieldOfSight.x = e.components.transform.x
-                    e.components.fieldOfSight.y = e.components.transform.y
+                    e.components.circleCollider.x = t.x
+                    e.components.circleCollider.y = t.y
+                    e.components.fieldOfSight.x = t.x
+                    e.components.fieldOfSight.y = t.y
+
                     if(getDistance(t, player) > e.components.fieldOfSight.radius * 2) {
                         e.components.fieldOfSight.sighted = {}
                     }
@@ -385,7 +382,7 @@ class ProjectileSystem {
                 b.x = t.x
                 b.y = t.y
                 this.#createBulletTrail(e)
-            } else if(e.tag === 'particle') {
+            } else if(e.tag === 'particle' || e.tag === 'statusEffect') {
                 if(e.components.particle.type === 'dust') {
                     let s = e.components.particle.size *= e.components.particle.decreaseRate
                     if(s <= e.components.particle.deathSize) {
@@ -397,7 +394,7 @@ class ProjectileSystem {
                     }
                     
                 } else if(e.components.particle.type === 'fire') {
-                    let s = e.components.sprite.scale += .3
+                    let s = e.components.particle.size += .1
                     if(s > e.components.particle.deathSize) {
                         e.destroy()
                     }
@@ -477,11 +474,11 @@ class ProjectileSystem {
             let weapon = player.components.weapons.currentWeapon
             let dirVector = normalize({x:x, y:y}, mouse)
             let fire = fireParticleEntity(this.entityManager, {
-                x: x + (dirVector.x * this.offset) - 100,
+                x: x + (dirVector.x * this.offset),
                 y: y + (dirVector.y * this.offset),
                 size: weapon.projectileSize,
                 damage: weapon.damage,
-                deathSize: weapon.projectileSize * 10,
+                deathSize: weapon.projectileSize * 4,
                 decreaseRate: this.dustDecreaseRate
             })
             dirVector.x = dirVector.x * weapon.projectileVelocity
@@ -489,6 +486,8 @@ class ProjectileSystem {
             fire.components.transform.velocityX = dirVector.x
             fire.components.transform.velocityY = dirVector.y
             this.coolDown = weapon.coolDown
+            console.log('fire: ', fire.components.transform.x, fire.components.transform.y)
+            console.log('player: ',x,y)
     }
 
     #createBulletTrail(e) {
@@ -526,8 +525,9 @@ class LifespanSystem {
 
 
 class UISystem {
-    constructor(entities) {
+    constructor(entities, player) {
         this.entities = entities
+        this.player = player
     }
 
     update(click, mouseOver, tick) {
@@ -550,8 +550,45 @@ class UISystem {
                     e.components.textBox.fill = e.components.textBox.fillStyle
                 }
                 
+            } else if(e.tag === 'playerScore') {
+                e.components.textBox.text = `$ ${this.player.components.score.score}`
             }
         })
+        this.#drawHealthArmorBar() 
+    }
+
+    init(entityManager) {
+        this.healthFill = []
+        for(let i = 0; i < this.player.components.health.currentHealth * BLOCK_SIZE; i += BLOCK_SIZE) {
+            let props = {
+                x: BLOCK_SIZE + i,
+                y: BLOCK_SIZE
+            }
+            healthBarSegment(entityManager, props)
+           this.healthFill.push(healthBarFill(entityManager, props))
+        }
+        this.armor = []
+        let y = BLOCK_SIZE * 2
+        for(let i = 0; i < MAX_ARMOR_VALUE * BLOCK_SIZE; i += BLOCK_SIZE) {
+            let props = {
+                x: BLOCK_SIZE + i,
+                y: y
+            }
+           this.armor.push(armorBarSegment(entityManager, props))
+        }
+
+    }
+
+    #drawHealthArmorBar() {
+        let health = this.player.components.health
+        let armor = this.player.components.armor.currentArmor
+        for(let i = health.currentHealth; i < health.maxHealth; i++) {
+            this.healthFill[i].isDrawable = false
+        }
+        for(let i = armor; i < MAX_ARMOR_VALUE; i++) {
+            this.armor[i].isDrawable = false
+        }
+
     }
 
     #setState(e, state) {
@@ -560,5 +597,23 @@ class UISystem {
        e.components.sprite.frameX = s.frameX
        e.components.sprite.frameY = s.frameY
        e.components.sprite.maxFrames = s.maxFrames || 1
+    }
+}
+
+class SpawnSystem {
+    constructor(entityManager) {
+        this.entityManager = entityManager
+        this.timer = 0
+        this.spawnLocations = [
+            {x: -BLOCK_SIZE, y: HEIGHT * .5},
+            {x: WIDTH + BLOCK_SIZE, y: HEIGHT * .5},
+            {x: WIDTH * .5, y: -BLOCK_SIZE},
+            {x: WIDTH * .5, y: HEIGHT + BLOCK_SIZE}
+        ]
+    }
+    spawn() {
+        let location = randomInt(this.spawnLocations.length)
+        let pos = this.spawnLocations[location]
+        zombieEnemyEntity(this.entityManager, pos)
     }
 }

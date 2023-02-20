@@ -135,3 +135,12 @@ const mapEntities = (entityManager, data, blueprint) => {
         })
     })
 }
+
+const getMidPoint = (e) => {
+    let s = e.components.sprite
+    let t = e.components.transform
+    return {
+        x: (s.scaledWidth * .5) + t.x,
+        y: (s.scaledHeight * .5) + t.y
+    }
+}

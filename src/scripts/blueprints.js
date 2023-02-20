@@ -23,8 +23,10 @@ const playerEntity = (entitymanager) => {
                 y: HEIGHT * .5,
                 radius: 16
             }),
-            new CHealth(100),
-            new CWeapons()
+            new CHealth(3),
+            new CArmor(1),
+            new CWeapons(),
+            new CScore()
         ]
     })
 }
@@ -93,12 +95,12 @@ const dustParticleEntity = (entitymanager, props) => {
 const fireParticleEntity = (entitymanager, props) => {
     let type = 'fire'
     return entitymanager.addEntity({
-        tag: 'particle',
+        tag: 'statusEffect',
         components: [
             new CSprite({
                 sprite: ASSET_MANAGER.cache[FIRE_PARTICLE_SPRITE],
-                spriteWidth: 100,
-                spriteHeight: 90,
+                spriteWidth: 64,
+                spriteHeight: 64,
                 scale: props.size,
                 fps: 1
             }),
@@ -106,7 +108,7 @@ const fireParticleEntity = (entitymanager, props) => {
                 x: props.x,
                 y: props.y,
                 velocityX: props.velocityX,
-                velocityY: props.velocityY
+                velocityY: props.velocityY,
             }),
             new CParticle({
                 type: type,
@@ -157,6 +159,25 @@ const healthBarSegment = (entitymanager, props) => {
     })
 }
 
+const healthBarFill = (entitymanager, props) => {
+    return entitymanager.addEntity({
+        tag: 'healthBarFill',
+        components: [
+            new CTransform({
+                x: props.x,
+                y: props.y,
+            }),
+            new CSprite({
+                sprite: ASSET_MANAGER.cache[HEALTH_BAR_FILL_SPRITE],
+                spriteWidth: 32,
+                spriteHeight: 32,
+                scale: 1,
+                fps: 1
+            })
+        ]
+    })
+}
+
 const armorBarSegment = (entitymanager, props) => {
     return entitymanager.addEntity({
         tag: 'healthBarSegment',
@@ -195,7 +216,11 @@ const weaponSlot = (entitymanager, props) => {
     })
 }
 
-const zombieEnemyEntity = (entitymanager) => {
+const zombieEnemyEntity = (entitymanager, props) => {
+    let midPoint = {
+        x: ((32 * 1.4) * .5) + props.x,
+        y: ((32 * 1.4) * .5) + props.y
+    }
     return entitymanager.addEntity({
         tag: 'enemy',
         components: [
@@ -207,20 +232,20 @@ const zombieEnemyEntity = (entitymanager) => {
                 fps: 1
             }),
             new CTransform({
-                x: 200,
-                y: 200,
-                maxVelocity: 60
+                x: props.x,
+                y: props.y,
+                maxVelocity: 50
             }),
             new CCircleCollider({
-                x: 200,
-                y: 200,
+                x: midPoint.x,
+                y: midPoint.y,
                 radius: 16
             }),
             new CHealth(10),
             new CFieldOfSight({
-                x: 200,
-                y: 200,
-                radius: 250
+                x: midPoint.x,
+                y: midPoint.y,
+                radius: 700
             })
         ]
     })
@@ -271,6 +296,30 @@ const mainMenuButtonEntity = (entitymanager, props) => {
                 textAlign: 'left ',
                 text: 'HelloWorld'
             })
+        ]
+    })
+}
+
+const playerScore = (entityManager, props) => {
+    return entityManager.addEntity({
+        tag: 'playerScore',
+        components: [
+            new CTransform({
+                x: props.x,
+                y: props.y,
+            }),
+            new CTextBox({
+                x: props.x,
+                y: props.y,
+                width: 200,
+                height: 48,
+                fontSize: '16px',
+                fillStyle: 'white',
+                fillStyleActive: 'red',
+                maxChars: 10,
+                textAlign: 'left ',
+                text: '0'
+            }), 
         ]
     })
 }
