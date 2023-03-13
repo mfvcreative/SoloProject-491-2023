@@ -567,6 +567,7 @@ class UISystem {
             healthBarSegment(entityManager, props)
            this.healthFill.push(healthBarFill(entityManager, props))
         }
+        /*
         this.armor = []
         let y = BLOCK_SIZE * 2
         for(let i = 0; i < MAX_ARMOR_VALUE * BLOCK_SIZE; i += BLOCK_SIZE) {
@@ -576,7 +577,7 @@ class UISystem {
             }
            this.armor.push(armorBarSegment(entityManager, props))
         }
-
+        */
     }
 
     #drawHealthArmorBar() {
@@ -585,10 +586,11 @@ class UISystem {
         for(let i = health.currentHealth; i < health.maxHealth; i++) {
             this.healthFill[i].isDrawable = false
         }
+        /*
         for(let i = armor; i < MAX_ARMOR_VALUE; i++) {
             this.armor[i].isDrawable = false
         }
-
+        */
     }
 
     #setState(e, state) {
@@ -604,12 +606,21 @@ class SpawnSystem {
     constructor(entityManager) {
         this.entityManager = entityManager
         this.timer = 0
+        this.spawnTime = 3
         this.spawnLocations = [
             {x: -BLOCK_SIZE, y: HEIGHT * .5},
             {x: WIDTH + BLOCK_SIZE, y: HEIGHT * .5},
             {x: WIDTH * .5, y: -BLOCK_SIZE},
             {x: WIDTH * .5, y: HEIGHT + BLOCK_SIZE}
         ]
+    }
+
+    update(deltaTime) {
+        this.timer += deltaTime
+        if(this.timer > this.spawnTime) {
+            this.timer = 0
+            this.spawn()
+        }
     }
     spawn() {
         let location = randomInt(this.spawnLocations.length)
